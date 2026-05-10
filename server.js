@@ -29,7 +29,6 @@ io.on('connection', (socket) => {
                 players: [],
                 settings: {
                     ceylanLossLimit: 5,
-                    hakkiLossLimit: 5,
                     hakkiMode: 'normal',
                     prize: ''
                 },
@@ -38,7 +37,7 @@ io.on('connection', (socket) => {
                     scores: { ceylan: 0, hakki: 0 },
                     deaths: { ceylan: 0, hakki: 0 },
                     ready: [],
-                    positions: {  // Rakip pozisyonları için
+                    positions: {
                         ceylan: { y: 160, velocity: 0, alive: true },
                         hakki: { y: 160, velocity: 0, alive: true }
                     }
@@ -62,14 +61,12 @@ io.on('connection', (socket) => {
         }
     });
     
-    // Pozisyon güncelleme (her frame'de gönderilecek)
     socket.on('positionUpdate', ({ room, character, y, velocity, score, deaths, alive }) => {
         if (rooms[room] && rooms[room].gameState.started) {
             rooms[room].gameState.positions[character] = { y, velocity, alive };
             rooms[room].gameState.scores[character] = score;
             rooms[room].gameState.deaths[character] = deaths;
             
-            // Rakibe gönder
             socket.to(room).emit('opponentPosition', {
                 character,
                 y,
@@ -79,20 +76,26 @@ io.on('connection', (socket) => {
                 alive
             });
             
-            // Oyun bitiş kontrolü
+            // Oyun bitiş kontrolü - HER ZAMAN CEYLAN'IN SINIRI KULLANILIR
             const settings = rooms[room].settings;
             const d = rooms[room].gameState.deaths;
             let winner = null, loser = null;
             
             if (settings.hakkiMode === 'ask') {
+                // Aşk modu: Ceylan her zaman kazanır
                 if (d.ceylan >= settings.ceylanLossLimit || d.hakki >= settings.ceylanLossLimit) {
-                    winner = 'ceylan'; loser = 'hakki';
+                    winner = 'ceylan';
+                    loser = 'hakki';
                 }
             } else {
+                // Normal mod: İlk ölüm sınırına ulaşan KAYBEDER
+                // İkisi de aynı sınırı kullanır (Ceylan'ın belirlediği)
                 if (d.ceylan >= settings.ceylanLossLimit) {
-                    winner = 'hakki'; loser = 'ceylan';
-                } else if (d.hakki >= settings.hakkiLossLimit) {
-                    winner = 'ceylan'; loser = 'hakki';
+                    winner = 'hakki';
+                    loser = 'ceylan';
+                } else if (d.hakki >= settings.ceylanLossLimit) {
+                    winner = 'ceylan';
+                    loser = 'hakki';
                 }
             }
             
