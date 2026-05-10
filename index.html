@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Flappy Aşk - Gerçek Zamanlı</title>
+    <title>Flappy Aşk - Ceylan & Hakkı</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
@@ -123,6 +123,11 @@
             padding: 20px;
             margin: 20px 0;
         }
+        .info-text {
+            color: #ffaa66;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
         @media (max-width: 800px) {
             .player-header { font-size: 1rem; }
             .score-board { font-size: 0.8rem; gap: 12px; }
@@ -182,23 +187,26 @@
         <h2>🎁 Ceylan Ödül Belirleme 🎁</h2>
         <div class="prize-area">
             <input type="text" id="ceylanPrize" placeholder="Ödül: Sana kahve ısmarlayacaksın ❤️">
-            <input type="number" id="ceylanLossLimit" value="5" min="1" max="20" placeholder="Ölüm sınırı">
+            <label style="display: block; margin-top: 10px;">💀 Ölüm Sınırı (kim önce bu sayıya ulaşırsa kaybeder):</label>
+            <input type="number" id="ceylanLossLimit" value="7" min="1" max="30">
+            <div class="info-text">⭐ Bu sınır Hakkı için de geçerlidir ⭐</div>
         </div>
         <button id="ceylanReadyBtn">⚡ Oyuna Hazırım ⚡</button>
     </div>
 </div>
 
-<!-- Hakkı Ayarları -->
+<!-- Hakkı Ayarları (SADECE MOD ve ÖDÜL) -->
 <div id="settingsHakki" class="screen" style="display: none;">
     <div class="card">
         <h2>🔥 Hakkı Ayarları 🔥</h2>
         <div class="prize-area">
             <input type="text" id="hakkiPrize" placeholder="Ödül: Sarılmak, kahve vs.">
+            <label style="display: block; margin-top: 10px;">🎮 Oyun Modu:</label>
             <select id="gameMode">
-                <option value="normal">Normal Mod</option>
-                <option value="ask">💖 AŞK MODU 💖</option>
+                <option value="normal">Normal Mod (İlk ölüm sınırına ulaşan kaybeder)</option>
+                <option value="ask">💖 AŞK MODU 💖 - Ceylan hep kazanır!</option>
             </select>
-            <input type="number" id="hakkiLossLimit" value="5" min="1" max="20" placeholder="Ölüm sınırı">
+            <div class="info-text">⭐ Ölüm sınırını Ceylan belirler. İkiniz de aynı sınırla oynarsınız ⭐</div>
         </div>
         <button id="hakkiReadyBtn">💘 Oyuna Hazırım 💘</button>
     </div>
@@ -234,23 +242,24 @@
     let myBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
     let opponentBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
     let opponentChar = null;
+    let lossLimit = 7; // Ceylan'ın belirleyeceği sınır
     
     // Borular
     let pipes = [];
-    let lastUpdateTime = 0;
     
-    const GRAVITY = 0.2;
-    const JUMP = -4.2;
+    const GRAVITY = 0.15;      // Daha yavaş düşüş
+    const JUMP = -3.2;         // Daha alçak zıplama
     const PIPE_W = 50;
-    const PIPE_GAP = 110;
-    const PIPE_SPACING = 220;
+    const PIPE_GAP = 120;      // Biraz daha geniş boşluk
+    const PIPE_SPACING = 240;
+    const PIPE_SPEED = 1.2;    // YARI YARIYA YAVAŞLATILDI (eski 2.5)
     const CANVAS_W = 800;
     const CANVAS_H = 350;
     
     let canvases = { ceylan: null, hakki: null };
     let ctxs = { ceylan: null, hakki: null };
     
-    // Rastgele boru üretimi (senkronize)
+    // Rastgele boru üretimi
     let seed = 12345;
     function seededRandom() {
         seed = (seed * 9301 + 49297) % 233280;
@@ -281,12 +290,10 @@
     function updateGame() {
         if (!gameActive) return;
         
-        // Sadece kendi kuşun yaşıyorsa güncelle
         if (myBird.alive) {
             myBird.velocity += GRAVITY;
             myBird.y += myBird.velocity;
             
-            // Tavan/ taban çarpışması
             if (myBird.y <= 0) { 
                 myBird.y = 0; 
                 myBird.velocity = 0; 
@@ -296,10 +303,10 @@
             }
         }
         
-        // Boruları güncelle (her zaman)
+        // Boruları güncelle
         for(let i = 0; i < pipes.length; i++) {
             let p = pipes[i];
-            p.x -= 2.5; // Daha akıcı hareket
+            p.x -= PIPE_SPEED;
             
             if (p.x + PIPE_W < 0) {
                 pipes.splice(i, 1);
@@ -310,19 +317,16 @@
                 continue;
             }
             
-            // Çarpışma kontrolü (sadece canlıysa)
             if (myBird.alive && p.x < 40+15 && p.x+PIPE_W > 40) {
                 if (myBird.y < p.y || myBird.y+24 > p.y+PIPE_GAP) {
                     die();
                 }
             }
             
-            // Skor artırma
             if (myBird.alive && !p.counted && p.x+PIPE_W < 40) {
                 p.counted = true;
                 myBird.score++;
                 updateScoreUI();
-                // Sunucuya skoru gönder
                 socket.emit('positionUpdate', {
                     room: roomId,
                     character: myCharacter,
@@ -335,18 +339,15 @@
             }
         }
         
-        // Pozisyonu sunucuya gönder (her frame'de)
-        if (gameActive) {
-            socket.emit('positionUpdate', {
-                room: roomId,
-                character: myCharacter,
-                y: myBird.y,
-                velocity: myBird.velocity,
-                score: myBird.score,
-                deaths: myBird.deaths,
-                alive: myBird.alive
-            });
-        }
+        socket.emit('positionUpdate', {
+            room: roomId,
+            character: myCharacter,
+            y: myBird.y,
+            velocity: myBird.velocity,
+            score: myBird.score,
+            deaths: myBird.deaths,
+            alive: myBird.alive
+        });
     }
     
     function die() {
@@ -355,7 +356,6 @@
         myBird.deaths++;
         updateScoreUI();
         
-        // Ölümü sunucuya bildir
         socket.emit('positionUpdate', {
             room: roomId,
             character: myCharacter,
@@ -366,7 +366,6 @@
             alive: false
         });
         
-        // 1 saniye sonra canlan
         setTimeout(() => {
             if (gameActive) {
                 myBird.alive = true;
@@ -395,12 +394,8 @@
     
     function draw() {
         if (!ctxs.ceylan || !ctxs.hakki) return;
-        
-        // Ceylan canvas'ı çiz
         drawCanvas('ceylan', myCharacter === 'ceylan' ? myBird : opponentBird, myCharacter === 'ceylan' ? myCharacter : opponentChar);
-        // Hakki canvas'ı çiz
         drawCanvas('hakki', myCharacter === 'hakki' ? myBird : opponentBird, myCharacter === 'hakki' ? myCharacter : opponentChar);
-        
         drawLoopId = requestAnimationFrame(draw);
     }
     
@@ -408,25 +403,21 @@
         let ctx = ctxs[area];
         ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
         
-        // Gökyüzü efekti
         let grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
         grad.addColorStop(0, '#1e6b8f');
         grad.addColorStop(1, '#1e3c4a');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
         
-        // Borular
         for(let p of pipes) {
             ctx.fillStyle = '#2d6a4f';
             ctx.fillRect(p.x, 0, PIPE_W, p.y);
             ctx.fillRect(p.x, p.y+PIPE_GAP, PIPE_W, CANVAS_H-p.y-PIPE_GAP);
-            // Boru başlıkları
             ctx.fillStyle = '#40916c';
             ctx.fillRect(p.x-5, p.y-25, PIPE_W+10, 25);
             ctx.fillRect(p.x-5, p.y+PIPE_GAP, PIPE_W+10, 25);
         }
         
-        // Kuş
         if (bird.alive) {
             ctx.fillStyle = birdChar === 'ceylan' ? '#f4a261' : '#e76f51';
             ctx.beginPath();
@@ -440,7 +431,6 @@
             ctx.beginPath();
             ctx.arc(44, bird.y+5, 1.5, 0, Math.PI*2);
             ctx.fill();
-            // Gaga
             ctx.fillStyle = '#e8a735';
             ctx.beginPath();
             ctx.moveTo(52, bird.y+9);
@@ -457,18 +447,16 @@
             ctx.fillText("💀", 35, bird.y+18);
         }
         
-        // Skor
         ctx.fillStyle = 'white';
         ctx.shadowBlur = 4;
         ctx.shadowColor = 'black';
-        ctx.font = 'bold 28px "Press Start 2P", monospace';
+        ctx.font = 'bold 28px monospace';
         ctx.fillText(bird.score, 30, 55);
         ctx.shadowBlur = 0;
         
-        // Ölüm sayısı
         ctx.font = '14px monospace';
         ctx.fillStyle = '#ffaaaa';
-        ctx.fillText(`Ölüm: ${bird.deaths}`, CANVAS_W-70, 30);
+        ctx.fillText(`Ölüm: ${bird.deaths}/${lossLimit}`, CANVAS_W-90, 30);
     }
     
     function jump() {
@@ -485,28 +473,21 @@
         
         if (canvases.ceylan) canvases.ceylan.addEventListener('click', handleJump);
         if (canvases.hakki) canvases.hakki.addEventListener('click', handleJump);
-        
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.code === 'ArrowUp') {
                 e.preventDefault();
                 jump();
             }
         });
-        
-        // Touch için
         document.addEventListener('touchstart', (e) => {
             e.preventDefault();
             jump();
         });
     }
     
-    // GAME LOOP (update ve draw ayrı)
     function startGameLoops() {
         if (gameLoopId) clearInterval(gameLoopId);
-        gameLoopId = setInterval(() => {
-            updateGame();
-        }, 1000 / 60); // 60 FPS
-        
+        gameLoopId = setInterval(() => updateGame(), 1000 / 60);
         if (drawLoopId) cancelAnimationFrame(drawLoopId);
         draw();
     }
@@ -518,8 +499,7 @@
         drawLoopId = null;
     }
     
-    // ============ SOCKET OLAYLARI ============
-    
+    // SOCKET OLAYLARI
     document.querySelectorAll('.char-card').forEach(card => {
         card.addEventListener('click', () => {
             document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
@@ -538,17 +518,10 @@
         document.getElementById('waitStatus').innerHTML = "🕊️ Sunucuya bağlanılıyor...";
     };
     
-    socket.on('assignedCharacter', (char) => { 
-        myCharacter = char;
-        console.log('Karakterin:', char);
-    });
+    socket.on('assignedCharacter', (char) => { myCharacter = char; });
+    socket.on('roomJoined', (room) => { roomId = room; });
     
-    socket.on('roomJoined', (room) => { 
-        roomId = room;
-        console.log('Odaya katıldı:', room);
-    });
-    
-    socket.on('bothPlayersReady', (settings) => {
+    socket.on('bothPlayersReady', () => {
         document.getElementById('waitingScreen').style.display = 'none';
         if(myCharacter === 'ceylan') {
             document.getElementById('settingsCeylan').style.display = 'flex';
@@ -559,8 +532,9 @@
     
     document.getElementById('ceylanReadyBtn').onclick = () => {
         let prize = document.getElementById('ceylanPrize').value || "Sürpriz bir hediye!";
-        let lossLimit = parseInt(document.getElementById('ceylanLossLimit').value) || 5;
-        socket.emit('updateSettings', { room: roomId, settings: { prize, ceylanLossLimit: lossLimit } });
+        let lossLimitVal = parseInt(document.getElementById('ceylanLossLimit').value) || 7;
+        lossLimit = lossLimitVal;
+        socket.emit('updateSettings', { room: roomId, settings: { prize, ceylanLossLimit: lossLimitVal } });
         socket.emit('playerReady', { room: roomId, character: 'ceylan' });
         document.getElementById('settingsCeylan').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'flex';
@@ -570,8 +544,7 @@
     document.getElementById('hakkiReadyBtn').onclick = () => {
         let prize = document.getElementById('hakkiPrize').value || "Sonsuz sevgi!";
         let mode = document.getElementById('gameMode').value;
-        let lossLimit = parseInt(document.getElementById('hakkiLossLimit').value) || 5;
-        socket.emit('updateSettings', { room: roomId, settings: { prize, hakkiMode: mode, hakkiLossLimit: lossLimit } });
+        socket.emit('updateSettings', { room: roomId, settings: { prize, hakkiMode: mode } });
         socket.emit('playerReady', { room: roomId, character: 'hakki' });
         document.getElementById('settingsHakki').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'flex';
@@ -579,8 +552,8 @@
     };
     
     socket.on('gameStart', (data) => {
-        console.log('Oyun başlıyor!', data);
         gameActive = true;
+        lossLimit = data.settings.ceylanLossLimit || 7;
         myBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
         opponentBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
         opponentChar = (myCharacter === 'ceylan') ? 'hakki' : 'ceylan';
@@ -593,7 +566,6 @@
         setupControls();
         startGameLoops();
         
-        // Başlangıç pozisyonunu gönder
         setTimeout(() => {
             socket.emit('positionUpdate', {
                 room: roomId, character: myCharacter,
@@ -625,10 +597,6 @@
         stopGameLoops();
         alert('💔 Rakip bağlantısı koptu! Sayfa yenilenecek.');
         location.reload();
-    });
-    
-    socket.on('settingsUpdated', (settings) => {
-        console.log('Rakip ayarları güncelledi:', settings);
     });
 </script>
 </body>
