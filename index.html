@@ -3,35 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Flappy Aşk - Ceylan & Hakkı</title>
+    <title>Flappy Aşk - Gerçek Zamanlı</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body {
             background: linear-gradient(145deg, #0a0f1e 0%, #0a1a2a 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui;
             padding: 20px;
         }
-        /* Ana container */
         .game-container {
             width: 1300px;
             max-width: 98vw;
             background: #000000aa;
             border-radius: 48px;
             backdrop-filter: blur(4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
             padding: 20px;
         }
-        /* Ekranlar (yatay bölünmüş) */
         .split-screen {
             display: flex;
             flex-direction: column;
@@ -41,14 +33,11 @@
             background: rgba(0,0,0,0.6);
             border-radius: 32px;
             overflow: hidden;
-            backdrop-filter: blur(8px);
             border: 2px solid rgba(255,215,0,0.3);
-            transition: all 0.2s;
         }
         .player-header {
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
             padding: 12px 20px;
             background: rgba(0,0,0,0.7);
             color: gold;
@@ -68,7 +57,6 @@
             background: #1e3c4a;
             cursor: pointer;
         }
-        /* Modal / ekran geçişleri */
         .screen {
             position: fixed;
             top: 0;
@@ -80,18 +68,15 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            transition: all 0.4s;
             backdrop-filter: blur(12px);
         }
         .card {
-            background: rgba(30,41,59,0.9);
-            backdrop-filter: blur(20px);
+            background: rgba(30,41,59,0.95);
             border-radius: 64px;
             padding: 40px;
             width: 500px;
             max-width: 90%;
             text-align: center;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.2);
         }
         .char-select {
@@ -105,13 +90,11 @@
             padding: 20px;
             border-radius: 60px;
             cursor: pointer;
-            transition: 0.2s;
             border: 3px solid transparent;
         }
         .char-card.selected {
             border-color: gold;
             background: #2d3a5e;
-            transform: scale(1.02);
         }
         button {
             background: linear-gradient(135deg, #f59e0b, #d97706);
@@ -123,7 +106,6 @@
             color: white;
             cursor: pointer;
             margin-top: 20px;
-            transition: 0.2s;
         }
         button:active { transform: scale(0.96);}
         input, select {
@@ -141,17 +123,6 @@
             padding: 20px;
             margin: 20px 0;
         }
-        .status-badge {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: black;
-            padding: 8px 16px;
-            border-radius: 30px;
-            color: lime;
-            font-family: monospace;
-            z-index: 2000;
-        }
         @media (max-width: 800px) {
             .player-header { font-size: 1rem; }
             .score-board { font-size: 0.8rem; gap: 12px; }
@@ -163,7 +134,6 @@
 <div id="app">
     <div class="game-container" style="display: none;" id="gameUI">
         <div class="split-screen">
-            <!-- CEYLAN (Üst) -->
             <div class="player-area" id="ceylanArea">
                 <div class="player-header">
                     <span>🦢 CEYLAN 💖</span>
@@ -172,9 +142,8 @@
                         <span>💀 Ölüm: <span id="ceylanDeaths">0</span></span>
                     </div>
                 </div>
-                <canvas id="ceylanCanvas" width="800" height="350" style="width:100%; height:auto; background:#1e3c4a"></canvas>
+                <canvas id="ceylanCanvas" width="800" height="350"></canvas>
             </div>
-            <!-- HAKKI (Alt) -->
             <div class="player-area" id="hakkiArea">
                 <div class="player-header">
                     <span>🦅 HAKKI 🔥</span>
@@ -183,17 +152,16 @@
                         <span>💀 Ölüm: <span id="hakkiDeaths">0</span></span>
                     </div>
                 </div>
-                <canvas id="hakkiCanvas" width="800" height="350" style="width:100%; height:auto; background:#1e3c4a"></canvas>
+                <canvas id="hakkiCanvas" width="800" height="350"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<!-- KARAKTER SEÇİM EKRANI -->
+<!-- Karakter Seçim -->
 <div id="charSelectScreen" class="screen">
     <div class="card">
         <h1 style="color:#FFD966">✨ AŞKIN KANATLARI ✨</h1>
-        <h3>Karakterini seç, aşk kuşu</h3>
         <div class="char-select">
             <div class="char-card" data-char="ceylan">
                 <div style="font-size: 80px;">🦢</div>
@@ -208,48 +176,44 @@
     </div>
 </div>
 
-<!-- AYAR EKRANI (CEYLAN) -->
+<!-- Ceylan Ayarları -->
 <div id="settingsCeylan" class="screen" style="display: none;">
     <div class="card">
         <h2>🎁 Ceylan Ödül Belirleme 🎁</h2>
         <div class="prize-area">
-            <label>Kazananın kaybedenden alacağı ödül:</label>
-            <input type="text" id="ceylanPrize" placeholder="Örn: Sana kahve ısmarlayacaksın ❤️">
-            <label>Kaybetme sınırı (kaç kez ölünce kaybeder):</label>
-            <input type="number" id="ceylanLossLimit" value="5" min="1" max="20">
+            <input type="text" id="ceylanPrize" placeholder="Ödül: Sana kahve ısmarlayacaksın ❤️">
+            <input type="number" id="ceylanLossLimit" value="5" min="1" max="20" placeholder="Ölüm sınırı">
         </div>
         <button id="ceylanReadyBtn">⚡ Oyuna Hazırım ⚡</button>
     </div>
 </div>
 
-<!-- AYAR EKRANI (HAKKI) -->
+<!-- Hakkı Ayarları -->
 <div id="settingsHakki" class="screen" style="display: none;">
     <div class="card">
         <h2>🔥 Hakkı Ayarları 🔥</h2>
         <div class="prize-area">
-            <label>Kazananın kaybedenden alacağı ödül:</label>
-            <input type="text" id="hakkiPrize" placeholder="Sarılmak, kahve vs.">
-            <label>Oyun Modu:</label>
+            <input type="text" id="hakkiPrize" placeholder="Ödül: Sarılmak, kahve vs.">
             <select id="gameMode">
-                <option value="normal">Normal Mod (İlk hedefe ulaşan kaybeder)</option>
-                <option value="ask">💖 AŞK MODU 💖 - Ceylan hep kazanır!</option>
+                <option value="normal">Normal Mod</option>
+                <option value="ask">💖 AŞK MODU 💖</option>
             </select>
-            <label>Kaybetme sınırı (Hakkı için):</label>
-            <input type="number" id="hakkiLossLimit" value="5" min="1" max="20">
+            <input type="number" id="hakkiLossLimit" value="5" min="1" max="20" placeholder="Ölüm sınırı">
         </div>
         <button id="hakkiReadyBtn">💘 Oyuna Hazırım 💘</button>
     </div>
 </div>
 
+<!-- Bekleme -->
 <div id="waitingScreen" class="screen" style="display: none;">
     <div class="card">
-        <h2>🌈 Rakipler birleşiyor... 🌈</h2>
+        <h2>🌈 Rakipler birleşiyor...</h2>
         <div style="font-size: 40px;">⏳</div>
-        <p>Karşındaki oyuncunun hazır olmasını bekliyorum...</p>
-        <div id="waitStatus">✨ Bekleniyor ✨</div>
+        <p id="waitStatus">Karşındaki oyuncuyu bekliyorum...</p>
     </div>
 </div>
 
+<!-- Oyun Bitti -->
 <div id="gameOverModal" class="screen" style="display: none;">
     <div class="card">
         <h1 id="winnerText">🎉 KAZANAN 🎉</h1>
@@ -259,170 +223,224 @@
 </div>
 
 <script>
-    // GLOBAL
     let socket = io();
     let myCharacter = null;
     let roomId = null;
-    let gameSettings = null;
     let gameActive = false;
-    let rafId = null;
-    let playersReadyState = { ceylan: false, hakki: false };
+    let animationFrameId = null;
     
-    // Oyun durumları (her canvas için ayrı)
-    let games = {
-        ceylan: { birdY: 160, velocity: 0, score: 0, deaths: 0, pipes: [], frame: 0, gameOver: true, canvas: null, ctx: null, lastTimestamp: 0 },
-        hakki: { birdY: 160, velocity: 0, score: 0, deaths: 0, pipes: [], frame: 0, gameOver: true, canvas: null, ctx: null, lastTimestamp: 0 }
-    };
+    // Yerel oyuncu verileri
+    let myBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
+    let opponentBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
+    let opponentChar = null;
+    
+    // Borular (ortak seed ile senkronize)
+    let pipes = [];
+    let frameCounter = 0;
+    let lastPipeGen = 0;
     
     const GRAVITY = 0.2;
     const JUMP = -4.2;
     const PIPE_W = 50;
     const PIPE_GAP = 110;
     const PIPE_SPACING = 220;
+    const CANVAS_W = 800;
+    const CANVAS_H = 350;
     
-    function initCanvas(char) {
-        let canvas = document.getElementById(`${char}Canvas`);
-        if (!canvas) return;
-        let ctx = canvas.getContext('2d');
-        games[char].canvas = canvas;
-        games[char].ctx = ctx;
-        canvas.width = 800;
-        canvas.height = 350;
-        resetGameLocal(char);
-        // click olayı
-        canvas.addEventListener('click', () => {
-            if (gameActive && !games[char].gameOver && myCharacter === char) {
-                games[char].velocity = JUMP;
+    let canvases = { ceylan: null, hakki: null };
+    let ctxs = { ceylan: null, hakki: null };
+    
+    // Rastgele boru üretimi (aynı seed ile iki tarafta aynı)
+    let seed = 12345;
+    function seededRandom() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    }
+    function resetPipes() {
+        pipes = [];
+        seed = 12345;
+        for(let i = 0; i < 4; i++) {
+            let pipeX = 500 + i * PIPE_SPACING;
+            let pipeY = seededRandom() * (CANVAS_H - PIPE_GAP - 80) + 40;
+            pipes.push({ x: pipeX, y: pipeY, counted: false });
+        }
+    }
+    
+    function initCanvases() {
+        canvases.ceylan = document.getElementById('ceylanCanvas');
+        canvases.hakki = document.getElementById('hakkiCanvas');
+        canvases.ceylan.width = CANVAS_W;
+        canvases.ceylan.height = CANVAS_H;
+        canvases.hakki.width = CANVAS_W;
+        canvases.hakki.height = CANVAS_H;
+        ctxs.ceylan = canvases.ceylan.getContext('2d');
+        ctxs.hakki = canvases.hakki.getContext('2d');
+    }
+    
+    function updateGame() {
+        if (!gameActive || !myBird.alive) return;
+        
+        myBird.velocity += GRAVITY;
+        myBird.y += myBird.velocity;
+        
+        // Çarpışma kontrolü
+        if (myBird.y <= 0) { myBird.y = 0; myBird.velocity = 0; }
+        if (myBird.y + 24 >= CANVAS_H) {
+            die();
+            return;
+        }
+        
+        // Borular
+        for(let i=0; i<pipes.length; i++) {
+            let p = pipes[i];
+            p.x -= 2;
+            
+            if (p.x + PIPE_W < 0) {
+                pipes.splice(i,1);
+                let newX = pipes[pipes.length-1].x + PIPE_SPACING;
+                let newY = seededRandom() * (CANVAS_H - PIPE_GAP - 80) + 40;
+                pipes.push({ x: newX, y: newY, counted: false });
+                i--;
+                continue;
+            }
+            
+            if (p.x < 40+15 && p.x+PIPE_W > 40) {
+                if (myBird.y < p.y || myBird.y+24 > p.y+PIPE_GAP) {
+                    die();
+                    return;
+                }
+            }
+            
+            if (!p.counted && p.x+PIPE_W < 40) {
+                p.counted = true;
+                myBird.score++;
+                updateScores();
+            }
+        }
+        
+        // Pozisyonu sunucuya gönder
+        socket.emit('positionUpdate', {
+            room: roomId,
+            character: myCharacter,
+            y: myBird.y,
+            velocity: myBird.velocity,
+            score: myBird.score,
+            deaths: myBird.deaths,
+            alive: myBird.alive
+        });
+    }
+    
+    function die() {
+        if (!myBird.alive) return;
+        myBird.alive = false;
+        myBird.deaths++;
+        updateScores();
+        
+        setTimeout(() => {
+            if (gameActive) {
+                myBird.alive = true;
+                myBird.y = 160;
+                myBird.velocity = 0;
+                // Gönder
+                socket.emit('positionUpdate', {
+                    room: roomId, character: myCharacter,
+                    y: myBird.y, velocity: myBird.velocity,
+                    score: myBird.score, deaths: myBird.deaths, alive: true
+                });
+            }
+        }, 800);
+    }
+    
+    function updateScores() {
+        document.getElementById(`${myCharacter}Score`).innerText = myBird.score;
+        document.getElementById(`${myCharacter}Deaths`).innerText = myBird.deaths;
+    }
+    
+    function updateOpponentUI() {
+        if (opponentChar) {
+            document.getElementById(`${opponentChar}Score`).innerText = opponentBird.score;
+            document.getElementById(`${opponentChar}Deaths`).innerText = opponentBird.deaths;
+        }
+    }
+    
+    function draw() {
+        // Her iki canvas'a da çiz (kendini ve rakibini)
+        for(let area of ['ceylan', 'hakki']) {
+            let ctx = ctxs[area];
+            if (!ctx) continue;
+            ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+            ctx.fillStyle = '#1e3c4a';
+            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            
+            // Borular
+            for(let p of pipes) {
+                ctx.fillStyle = '#2d6a4f';
+                ctx.fillRect(p.x, 0, PIPE_W, p.y);
+                ctx.fillRect(p.x, p.y+PIPE_GAP, PIPE_W, CANVAS_H-p.y-PIPE_GAP);
+                ctx.fillStyle = '#40916c';
+                ctx.fillRect(p.x-5, p.y-20, PIPE_W+10, 20);
+                ctx.fillRect(p.x-5, p.y+PIPE_GAP, PIPE_W+10, 20);
+            }
+            
+            // Bu alanın sahibi kim? (ceylan alanı üst, hakki alanı alt)
+            let isCeylanArea = (area === 'ceylan');
+            let selfBird = (myCharacter === 'ceylan') === isCeylanArea ? myBird : opponentBird;
+            let selfChar = (myCharacter === 'ceylan') === isCeylanArea ? myCharacter : opponentChar;
+            let birdColor = selfChar === 'ceylan' ? '#f4a261' : '#e76f51';
+            
+            if (selfBird.alive) {
+                ctx.fillStyle = birdColor;
+                ctx.beginPath();
+                ctx.arc(40, selfBird.y+12, 12, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(46, selfBird.y+7, 2, 0, Math.PI*2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = 'gray';
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText("💀 ÖLÜ 💀", 30, 60);
+            }
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px monospace';
+            ctx.fillText(selfBird.score, 30, 50);
+        }
+        
+        animationFrameId = requestAnimationFrame(draw);
+    }
+    
+    // Eventler
+    function setupControls() {
+        const handleJump = (e) => {
+            e.preventDefault();
+            if (gameActive && myBird.alive) {
+                myBird.velocity = JUMP;
+            }
+        };
+        canvases.ceylan.addEventListener('click', handleJump);
+        canvases.hakki.addEventListener('click', handleJump);
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleJump(e);
             }
         });
     }
     
-    function resetGameLocal(char) {
-        let g = games[char];
-        g.birdY = 160;
-        g.velocity = 0;
-        g.score = 0;
-        if (!g.gameOver) g.deaths = 0; // ölüm sayısını sıfırlama sadece yeni oyunda server setler
-        g.pipes = [];
-        g.frame = 0;
-        g.gameOver = false;
-        for(let i = 0; i < 3; i++) {
-            let pipeX = 500 + i * PIPE_SPACING;
-            let pipeY = Math.random() * (g.canvas.height - PIPE_GAP - 80) + 40;
-            g.pipes.push({ x: pipeX, y: pipeY, counted: false });
-        }
-    }
-    
-    function updateGame(char) {
-        let g = games[char];
-        if (!g.canvas || g.gameOver || !gameActive) return false;
-        // fizik
-        g.velocity += GRAVITY;
-        g.birdY += g.velocity;
-        if (g.birdY <= 0) { g.birdY = 0; g.velocity = 0; }
-        if (g.birdY + 24 >= g.canvas.height) { die(char); return false; }
-        
-        // borular
-        for (let i=0; i<g.pipes.length; i++) {
-            let p = g.pipes[i];
-            p.x -= 2;
-            if (p.x + PIPE_W < 0) {
-                g.pipes.splice(i,1);
-                let newX = g.pipes[g.pipes.length-1].x + PIPE_SPACING;
-                let newY = Math.random() * (g.canvas.height - PIPE_GAP - 80) + 40;
-                g.pipes.push({ x: newX, y: newY, counted: false });
-                i--;
-                continue;
-            }
-            // collision
-            if (p.x < 40+15 && p.x+PIPE_W > 40) {
-                if (g.birdY < p.y || g.birdY+24 > p.y+PIPE_GAP) { die(char); return false; }
-            }
-            if (!p.counted && p.x+PIPE_W < 40) {
-                p.counted = true;
-                g.score++;
-                socket.emit('scoreUpdate', { room: roomId, character: char, score: g.score, deathCount: g.deaths });
-            }
-        }
-        g.frame++;
-        return true;
-    }
-    
-    function die(char) {
-        if (!gameActive) return;
-        let g = games[char];
-        if (g.gameOver) return;
-        g.gameOver = true;
-        g.deaths++;
-        // sunucuya ölüm bildir
-        socket.emit('scoreUpdate', { room: roomId, character: char, score: g.score, deathCount: g.deaths });
-        // 1 saniye sonra canlan
-        setTimeout(() => {
-            if (gameActive && !games[char].gameOver === false) resetGameLocal(char);
-            else if(gameActive) resetGameLocal(char);
-        }, 800);
-    }
-    
-    function drawAll() {
-        for(let char of ['ceylan','hakki']) {
-            let g = games[char];
-            if (!g.ctx) continue;
-            let ctx = g.ctx;
-            ctx.clearRect(0,0,g.canvas.width,g.canvas.height);
-            ctx.fillStyle = '#1e3c4a';
-            ctx.fillRect(0,0,g.canvas.width,g.canvas.height);
-            // borular
-            ctx.fillStyle = '#2d6a4f';
-            for(let p of g.pipes) {
-                ctx.fillRect(p.x, 0, PIPE_W, p.y);
-                ctx.fillRect(p.x, p.y+PIPE_GAP, PIPE_W, g.canvas.height-p.y-PIPE_GAP);
-                ctx.fillStyle = '#40916c';
-                ctx.fillRect(p.x-5, p.y-20, PIPE_W+10, 20);
-                ctx.fillRect(p.x-5, p.y+PIPE_GAP, PIPE_W+10, 20);
-                ctx.fillStyle = '#2d6a4f';
-            }
-            // kuş
-            ctx.fillStyle = char === 'ceylan' ? '#f4a261' : '#e76f51';
-            ctx.beginPath();
-            ctx.arc(40, g.birdY+12, 12, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.arc(46, g.birdY+7, 2, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 20px monospace';
-            ctx.fillText(g.score, 30, 40);
-            if(g.gameOver) {
-                ctx.fillStyle = 'red';
-                ctx.font = 'bold 18px monospace';
-                ctx.fillText("ÖLÜM", 30, 80);
-            }
-        }
-        requestAnimationFrame(() => { if(gameActive) drawAll(); });
-    }
-    
-    function animateGame() {
-        if(!gameActive) return;
-        for(let char of ['ceylan','hakki']) {
-            updateGame(char);
-        }
-        drawAll();
-        setTimeout(() => animateGame(), 20);
-    }
-    
-    // UI ve socket olayları
+    // Socket olayları
     document.querySelectorAll('.char-card').forEach(card => {
-        card.addEventListener('click', (e) => {
+        card.addEventListener('click', () => {
             document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             document.getElementById('confirmCharBtn').disabled = false;
             window.tempChar = card.dataset.char;
         });
     });
+    
     document.getElementById('confirmCharBtn').onclick = () => {
         myCharacter = window.tempChar;
-        if(!myCharacter) return;
         socket.emit('joinGame');
         document.getElementById('charSelectScreen').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'flex';
@@ -430,59 +448,69 @@
     
     socket.on('assignedCharacter', (char) => { myCharacter = char; });
     socket.on('roomJoined', (room) => { roomId = room; });
-    socket.on('bothPlayersReady', (settings) => {
+    
+    socket.on('bothPlayersReady', () => {
         document.getElementById('waitingScreen').style.display = 'none';
         if(myCharacter === 'ceylan') document.getElementById('settingsCeylan').style.display = 'flex';
         else document.getElementById('settingsHakki').style.display = 'flex';
     });
+    
     document.getElementById('ceylanReadyBtn').onclick = () => {
         let prize = document.getElementById('ceylanPrize').value;
         let lossLimit = parseInt(document.getElementById('ceylanLossLimit').value);
-        socket.emit('updateSettings', { room: roomId, settings: { prize: prize, ceylanLossLimit: lossLimit } });
+        socket.emit('updateSettings', { room: roomId, settings: { prize, ceylanLossLimit: lossLimit } });
         socket.emit('playerReady', { room: roomId, character: 'ceylan' });
         document.getElementById('settingsCeylan').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'flex';
         document.getElementById('waitStatus').innerText = "Rakip hazır olunca başlıyor...";
     };
+    
     document.getElementById('hakkiReadyBtn').onclick = () => {
         let prize = document.getElementById('hakkiPrize').value;
         let mode = document.getElementById('gameMode').value;
         let lossLimit = parseInt(document.getElementById('hakkiLossLimit').value);
-        socket.emit('updateSettings', { room: roomId, settings: { prize: prize, hakkiMode: mode, hakkiLossLimit: lossLimit } });
+        socket.emit('updateSettings', { room: roomId, settings: { prize, hakkiMode: mode, hakkiLossLimit: lossLimit } });
         socket.emit('playerReady', { room: roomId, character: 'hakki' });
         document.getElementById('settingsHakki').style.display = 'none';
         document.getElementById('waitingScreen').style.display = 'flex';
-        document.getElementById('waitStatus').innerText = "Ceylan hazır olunca başlıyor...";
+        document.getElementById('waitStatus').innerText = "Rakip hazır olunca başlıyor...";
     };
+    
     socket.on('gameStart', (data) => {
         gameActive = true;
+        myBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
+        opponentBird = { y: 160, velocity: 0, alive: true, score: 0, deaths: 0 };
+        opponentChar = (myCharacter === 'ceylan') ? 'hakki' : 'ceylan';
+        
         document.getElementById('waitingScreen').style.display = 'none';
         document.getElementById('gameUI').style.display = 'block';
-        gameSettings = data.settings;
-        for(let char of ['ceylan','hakki']) {
-            initCanvas(char);
-            games[char].deaths = data.deaths[char];
-            document.getElementById(`${char}Deaths`).innerText = games[char].deaths;
-            resetGameLocal(char);
-        }
-        animateGame();
+        
+        initCanvases();
+        resetPipes();
+        setupControls();
+        draw();
     });
-    socket.on('stateUpdate', (state) => {
-        document.getElementById('ceylanScore').innerText = state.scores.ceylan;
-        document.getElementById('hakkiScore').innerText = state.scores.hakki;
-        document.getElementById('ceylanDeaths').innerText = state.deaths.ceylan;
-        document.getElementById('hakkiDeaths').innerText = state.deaths.hakki;
-        games.ceylan.deaths = state.deaths.ceylan;
-        games.hakki.deaths = state.deaths.hakki;
+    
+    socket.on('opponentPosition', (data) => {
+        if (!gameActive) return;
+        opponentBird.y = data.y;
+        opponentBird.velocity = data.velocity;
+        opponentBird.score = data.score;
+        opponentBird.deaths = data.deaths;
+        opponentBird.alive = data.alive;
+        updateOpponentUI();
     });
+    
     socket.on('gameOver', (data) => {
         gameActive = false;
         document.getElementById('winnerText').innerHTML = data.winner === 'ceylan' ? '🎉 CEYLAN KAZANDI 🎉' : '🔥 HAKKI KAZANDI 🔥';
-        document.getElementById('prizeText').innerHTML = `🎁 ÖDÜL: ${data.prize || 'Sonsuz sevgi ❤️'}`;
+        document.getElementById('prizeText').innerHTML = `🎁 ÖDÜL: ${data.prize || 'Sonsuz sevgi'}`;
         document.getElementById('gameOverModal').style.display = 'flex';
+        if(animationFrameId) cancelAnimationFrame(animationFrameId);
     });
+    
     socket.on('opponentDisconnected', () => {
-        alert('Rakip bağlantısı koptu, sayfayı yenile.');
+        alert('Rakip bağlantısı koptu!');
         location.reload();
     });
 </script>
